@@ -90,7 +90,13 @@ def main():
         reset_defaults()
 
     # Load data
-    gdf, city_council_districts, neighborhoods, red_light_cameras, speed_cameras = load_data()
+    (
+        gdf,
+        city_council_districts,
+        neighborhoods,
+        red_light_cameras,
+        speed_cameras,
+    ) = load_data()
 
     # Apply non-motorist filter
     if non_motorist_filter:
@@ -139,7 +145,7 @@ def main():
                 "weight": 2,
             },
         ).add_to(m)
-        
+
     # Red light cameras layer
     # if show_red_light_cameras:
     #     folium.GeoJson(
@@ -150,7 +156,7 @@ def main():
     #             "weight": 2,
     #         },
     #     ).add_to(m)
-        
+
     if show_red_light_cameras:
         for _, camera in red_light_cameras.iterrows():
             folium.Marker(
@@ -158,7 +164,7 @@ def main():
                 icon=folium.Icon(color="red", icon="camera"),
                 tooltip="Red Light Camera",
             ).add_to(m)
-        
+
     # Speed cameras layer
     # if show_speed_cameras:
     #     folium.GeoJson(
@@ -169,7 +175,7 @@ def main():
     #             "weight": 2,
     #         },
     #     ).add_to(m)
-    
+
     if show_speed_cameras:
         for _, camera in speed_cameras.iterrows():
             folium.Marker(
@@ -180,16 +186,19 @@ def main():
 
     # Display map
     st_folium(m, width=900, height=800)
-    
+
     readme_raw_url = "https://raw.githubusercontent.com/fedderw/baltimore-city-crash-analysis/74adb465cced95c0708b4ffae74e6d987c482c35/README.md"
     readme_url = "https://github.com/fedderw/baltimore-city-crash-analysis/blob/5111a0363e7d955a4a94a1b58f0703117635d54b/README.md"
     data_github_url = "https://github.com/fedderw/baltimore-city-crash-analysis"
     app_github_url = "https://github.com/fedderw/baltimore-crash-heat-map"
-    
+
     st.markdown(f"## About")
-    st.write(f"See the [README]({readme_url}) for more information about the data source and processing.")
-    st.write(f"See the app's [GitHub repository]({app_github_url}) for the app's source code.")
-    
+    st.write(
+        f"See the [README]({readme_url}) for more information about the data source and processing."
+    )
+    st.write(
+        f"See the app's [GitHub repository]({app_github_url}) for the app's source code."
+    )
 
 
 if __name__ == "__main__":
