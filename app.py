@@ -24,27 +24,31 @@ def load_data():
 
     return gdf, city_council_districts, neighborhoods
 
+defaults = {
+    "radius": 8,
+    "blur": 6,
+    "min_opacity": 0.3,
+    "gradient": {0.2: 'blue', 0.4: 'lime', 0.6: 'yellow', 1: 'red'},
+}
 
 # Reset defaults function
 def reset_defaults():
-    st.session_state.radius = 25
-    st.session_state.blur = 15
-    st.session_state.min_opacity = 0.5
-    st.session_state.max_zoom = 18
+    st.session_state.radius = defaults["radius"]
+    st.session_state.blur = defaults["blur"]
+    st.session_state.min_opacity = defaults["min_opacity"]
 
 
 def main():
     st.title("Crashes resulting in injury or death")
+    st.write("Data from 1/1/2018 to 12/11/2023")
 
     # Initialize session state variables
     if "radius" not in st.session_state:
-        st.session_state.radius = 25
+        st.session_state.radius = defaults["radius"]
     if "blur" not in st.session_state:
-        st.session_state.blur = 15
+        st.session_state.blur = defaults["blur"]
     if "min_opacity" not in st.session_state:
-        st.session_state.min_opacity = 0.5
-    if "max_zoom" not in st.session_state:
-        st.session_state.max_zoom = 18
+        st.session_state.min_opacity = defaults["min_opacity"]
 
     # Sidebar options
     base_map = st.sidebar.selectbox(
@@ -72,9 +76,7 @@ def main():
     st.session_state.min_opacity = st.sidebar.slider(
         "Min Opacity", min_value=0.0, max_value=1.0, value=st.session_state.min_opacity
     )
-    st.session_state.max_zoom = st.sidebar.slider(
-        "Max Zoom", min_value=1, max_value=20, value=st.session_state.max_zoom
-    )
+
 
     # Option to reset to default values
     if st.sidebar.button("Reset to Default Values"):
@@ -98,11 +100,16 @@ def main():
     heat_data = [[point.xy[1][0], point.xy[0][0]] for point in gdf.geometry]
     HeatMap(
         heat_data,
-        max_zoom=st.session_state.max_zoom,
         radius=st.session_state.radius,
         blur=st.session_state.blur,
         min_opacity=st.session_state.min_opacity,
+        gradient=defaults["gradient"],
     ).add_to(m)
+    
+    print(f"Radius: {st.session_state.radius}")
+    print(f"Blur: {st.session_state.blur}")
+    print(f"Min Opacity: {st.session_state.min_opacity}")
+    print(f"Gradient: {defaults['gradient']}")
 
     # Districts layer
     if show_districts:
