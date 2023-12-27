@@ -15,14 +15,18 @@ def load_data():
     clean_data_path = "https://github.com/fedderw/baltimore-city-crash-analysis/blob/74adb465cced95c0708b4ffae74e6d987c482c35/data/clean/crash_data.geojson?raw=true"
     city_council_district_geojson_path = "https://github.com/fedderw/baltimore-city-crash-analysis/blob/74adb465cced95c0708b4ffae74e6d987c482c35/data/clean/city_council_districts.geojson?raw=true"
     neighborhoods_url = "https://services1.arcgis.com/UWYHeuuJISiGmgXx/arcgis/rest/services/Neighborhood/FeatureServer/0/query?outFields=*&where=1%3D1&f=geojson"
+    red_light_cameras_url = "https://services3.arcgis.com/ZTvQ9NuONePFYofE/arcgis/rest/services/Baltimore_ATVES_Red_Light_Camera/FeatureServer/1/query?outFields=*&where=1%3D1&f=geojson"
+    speed_cameras_url = "https://services3.arcgis.com/ZTvQ9NuONePFYofE/arcgis/rest/services/Baltimore_ATVES_Speed_Cameras/FeatureServer/3/query?outFields=*&where=1%3D1&f=geojson"
 
     gdf = gpd.read_file(clean_data_path)
     city_council_districts = gpd.read_file(
         city_council_district_geojson_path
     ).clean_names()
     neighborhoods = gpd.read_file(neighborhoods_url).clean_names()
+    red_light_cameras = gpd.read_file(red_light_cameras_url).clean_names()
+    speed_cameras = gpd.read_file(speed_cameras_url).clean_names()
 
-    return gdf, city_council_districts, neighborhoods
+    return gdf, city_council_districts, neighborhoods, red_light_cameras, speed_cameras
 
 
 defaults = {
@@ -41,7 +45,7 @@ def reset_defaults():
 
 
 def main():
-    st.title("Crashes resulting in injury or death")
+    st.title("Crashes involving non-motorists resulting in injury or death")
     st.write("Data from 1/1/2018 to 12/11/2023")
 
     # Initialize session state variables
@@ -61,10 +65,12 @@ def main():
             "OpenStreetMap",
         ],
     )
-    show_districts = st.sidebar.checkbox("Show City Council Districts")
-    show_neighborhoods = st.sidebar.checkbox("Show Neighborhoods")
+    show_districts = st.sidebar.checkbox("Show city council district boundaries")
+    show_neighborhoods = st.sidebar.checkbox("Show neighborhood boundaries")
+    show_red_light_cameras = st.sidebar.checkbox("Show red light cameras")
+    show_speed_cameras = st.sidebar.checkbox("Show speed cameras")
     non_motorist_filter = st.sidebar.checkbox(
-        "Show Only Non-Motorist Involved Crashes", value=True
+        "Show only crashes involving non-motorists", value=True
     )
 
     # Create a slider for the radius of the heatmap
@@ -84,7 +90,7 @@ def main():
         reset_defaults()
 
     # Load data
-    gdf, city_council_districts, neighborhoods = load_data()
+    gdf, city_council_districts, neighborhoods, red_light_cameras, speed_cameras = load_data()
 
     # Apply non-motorist filter
     if non_motorist_filter:
@@ -133,9 +139,57 @@ def main():
                 "weight": 2,
             },
         ).add_to(m)
+        
+    # Red light cameras layer
+    # if show_red_light_cameras:
+    #     folium.GeoJson(
+    #         red_light_cameras,
+    #         style_function=lambda x: {
+    #             "fillColor": "transparent",
+    #             "color": "blue",
+    #             "weight": 2,
+    #         },
+    #     ).add_to(m)
+        
+    if show_red_light_cameras:
+        for _, camera in red_light_cameras.iterrows():
+            folium.Marker(
+                location=[camera.geometry.y, camera.geometry.x],
+                icon=folium.Icon(color="red", icon="camera"),
+                tooltip="Red Light Camera",
+            ).add_to(m)
+        
+    # Speed cameras layer
+    # if show_speed_cameras:
+    #     folium.GeoJson(
+    #         speed_cameras,
+    #         style_function=lambda x: {
+    #             "fillColor": "transparent",
+    #             "color": "green",
+    #             "weight": 2,
+    #         },
+    #     ).add_to(m)
+    
+    if show_speed_cameras:
+        for _, camera in speed_cameras.iterrows():
+            folium.Marker(
+                location=[camera.geometry.y, camera.geometry.x],
+                icon=folium.Icon(color="green", icon="camera"),
+                tooltip="Speed Camera",
+            ).add_to(m)
 
     # Display map
     st_folium(m, width=900, height=800)
+    
+    readme_raw_url = "https://raw.githubusercontent.com/fedderw/baltimore-city-crash-analysis/74adb465cced95c0708b4ffae74e6d987c482c35/README.md"
+    readme_url = "https://github.com/fedderw/baltimore-city-crash-analysis/blob/5111a0363e7d955a4a94a1b58f0703117635d54b/README.md"
+    data_github_url = "https://github.com/fedderw/baltimore-city-crash-analysis"
+    app_github_url = "https://github.com/fedderw/baltimore-crash-heat-map"
+    
+    st.markdown(f"## About")
+    st.write(f"See the [README]({readme_url}) for more information about the data source and processing.")
+    st.write(f"See the app's [GitHub repository]({app_github_url}) for the app's source code.")
+    
 
 
 if __name__ == "__main__":
