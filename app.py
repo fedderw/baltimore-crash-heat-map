@@ -105,7 +105,7 @@ def main():
     # Create map
     m = folium.Map(
         location=[gdf.geometry.y.mean(), gdf.geometry.x.mean()],
-        zoom_start=11,
+        zoom_start=12,
         tiles=base_map,
     )
 
