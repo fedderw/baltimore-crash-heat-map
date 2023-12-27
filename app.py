@@ -24,12 +24,14 @@ def load_data():
 
     return gdf, city_council_districts, neighborhoods
 
+
 defaults = {
     "radius": 8,
     "blur": 6,
     "min_opacity": 0.3,
-    "gradient": {0.2: 'blue', 0.4: 'lime', 0.6: 'yellow', 1: 'red'},
+    "gradient": {0.2: "blue", 0.4: "lime", 0.6: "yellow", 1: "red"},
 }
+
 
 # Reset defaults function
 def reset_defaults():
@@ -77,7 +79,6 @@ def main():
         "Min Opacity", min_value=0.0, max_value=1.0, value=st.session_state.min_opacity
     )
 
-
     # Option to reset to default values
     if st.sidebar.button("Reset to Default Values"):
         reset_defaults()
@@ -105,7 +106,7 @@ def main():
         min_opacity=st.session_state.min_opacity,
         gradient=defaults["gradient"],
     ).add_to(m)
-    
+
     print(f"Radius: {st.session_state.radius}")
     print(f"Blur: {st.session_state.blur}")
     print(f"Min Opacity: {st.session_state.min_opacity}")
@@ -135,6 +136,7 @@ def main():
 
     # Display map
     st_folium(m, width=900, height=800)
+
 
 if __name__ == "__main__":
     main()
