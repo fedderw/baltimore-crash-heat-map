@@ -180,7 +180,7 @@ def main():
         for _, camera in speed_cameras.iterrows():
             folium.Marker(
                 location=[camera.geometry.y, camera.geometry.x],
-                icon=folium.Icon(color="green", icon="camera"),
+                icon=folium.Icon(color="blue", icon="camera"),
                 tooltip="Speed Camera",
             ).add_to(m)
 
