@@ -12,3 +12,4 @@ black
 isort
 prefect
 duckdb
+ipykernel

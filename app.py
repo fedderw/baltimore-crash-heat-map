@@ -29,7 +29,7 @@ def load_data():
     return gdf, city_council_districts, neighborhoods, red_light_cameras, speed_cameras
 
 
-defaults = {
+heatmap_defaults = {
     "radius": 8,
     "blur": 6,
     "min_opacity": 0.3,
@@ -39,9 +39,9 @@ defaults = {
 
 # Reset defaults function
 def reset_defaults():
-    st.session_state.radius = defaults["radius"]
-    st.session_state.blur = defaults["blur"]
-    st.session_state.min_opacity = defaults["min_opacity"]
+    st.session_state.radius = heatmap_defaults["radius"]
+    st.session_state.blur = heatmap_defaults["blur"]
+    st.session_state.min_opacity = heatmap_defaults["min_opacity"]
 
 
 def main():
@@ -50,11 +50,11 @@ def main():
 
     # Initialize session state variables
     if "radius" not in st.session_state:
-        st.session_state.radius = defaults["radius"]
+        st.session_state.radius = heatmap_defaults["radius"]
     if "blur" not in st.session_state:
-        st.session_state.blur = defaults["blur"]
+        st.session_state.blur = heatmap_defaults["blur"]
     if "min_opacity" not in st.session_state:
-        st.session_state.min_opacity = defaults["min_opacity"]
+        st.session_state.min_opacity = heatmap_defaults["min_opacity"]
 
     # Sidebar options
     base_map = st.sidebar.selectbox(
@@ -116,13 +116,13 @@ def main():
         radius=st.session_state.radius,
         blur=st.session_state.blur,
         min_opacity=st.session_state.min_opacity,
-        gradient=defaults["gradient"],
+        gradient=heatmap_defaults["gradient"],
     ).add_to(m)
 
     print(f"Radius: {st.session_state.radius}")
     print(f"Blur: {st.session_state.blur}")
     print(f"Min Opacity: {st.session_state.min_opacity}")
-    print(f"Gradient: {defaults['gradient']}")
+    print(f"Gradient: {heatmap_defaults['gradient']}")
 
     # Districts layer
     if show_districts:
@@ -146,17 +146,6 @@ def main():
             },
         ).add_to(m)
 
-    # Red light cameras layer
-    # if show_red_light_cameras:
-    #     folium.GeoJson(
-    #         red_light_cameras,
-    #         style_function=lambda x: {
-    #             "fillColor": "transparent",
-    #             "color": "blue",
-    #             "weight": 2,
-    #         },
-    #     ).add_to(m)
-
     if show_red_light_cameras:
         for _, camera in red_light_cameras.iterrows():
             folium.Marker(
@@ -164,17 +153,6 @@ def main():
                 icon=folium.Icon(color="red", icon="camera"),
                 tooltip="Red Light Camera",
             ).add_to(m)
-
-    # Speed cameras layer
-    # if show_speed_cameras:
-    #     folium.GeoJson(
-    #         speed_cameras,
-    #         style_function=lambda x: {
-    #             "fillColor": "transparent",
-    #             "color": "green",
-    #             "weight": 2,
-    #         },
-    #     ).add_to(m)
 
     if show_speed_cameras:
         for _, camera in speed_cameras.iterrows():
