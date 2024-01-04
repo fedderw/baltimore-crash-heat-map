@@ -81,7 +81,12 @@ def load_data():
             )
         """
     ).df()
-    gdf = gpd.GeoDataFrame(nonmotorist_crashes, geometry=gpd.points_from_xy(nonmotorist_crashes.longitude, nonmotorist_crashes.latitude))
+    gdf = gpd.GeoDataFrame(
+        nonmotorist_crashes,
+        geometry=gpd.points_from_xy(
+            nonmotorist_crashes.longitude, nonmotorist_crashes.latitude
+        ),
+    )
     city_council_districts = gpd.read_file(
         city_council_district_geojson_path
     ).clean_names()
@@ -109,7 +114,7 @@ def reset_defaults():
 
 def main():
     st.title("Crashes involving non-motorists resulting in injury or death")
-    
+
     # Load data
     (
         gdf,
@@ -126,6 +131,10 @@ def main():
         st.session_state.blur = heatmap_defaults["blur"]
     if "min_opacity" not in st.session_state:
         st.session_state.min_opacity = heatmap_defaults["min_opacity"]
+    if "zoom" not in st.session_state:
+        st.session_state.zoom = 12
+    if "center" not in st.session_state:
+        st.session_state.center = [gdf.geometry.y.mean(), gdf.geometry.x.mean()]
 
     # Sidebar options
     base_map = st.sidebar.selectbox(
@@ -140,16 +149,10 @@ def main():
     show_neighborhoods = st.sidebar.checkbox("Show neighborhood boundaries")
     show_red_light_cameras = st.sidebar.checkbox("Show red light cameras")
     show_speed_cameras = st.sidebar.checkbox("Show speed cameras")
-    
-  
-    
-    start_date_input = st.sidebar.date_input(
-        "Start Date", gdf["crash_date"].min()
-    )
+
+    start_date_input = st.sidebar.date_input("Start Date", gdf["crash_date"].min())
     # print(start_date_input)
-    end_date_input = st.sidebar.date_input(
-        "End Date", gdf["crash_date"].max()
-    )
+    end_date_input = st.sidebar.date_input("End Date", gdf["crash_date"].max())
     if start_date_input > end_date_input:
         st.sidebar.error("End date must fall after start date.")
     else:
@@ -159,8 +162,7 @@ def main():
                 datetime.datetime.combine(end_date_input, datetime.time.max),
             )
         ]
-        
-    
+
     # Create a slider for the radius of the heatmap
     st.sidebar.markdown("## Heatmap Options")
     st.session_state.radius = st.sidebar.slider(
@@ -179,7 +181,7 @@ def main():
 
     # Create map
     m = folium.Map(
-        location=[gdf.geometry.y.mean(), gdf.geometry.x.mean()],
+        location=[39.2904, -76.6122],
         zoom_start=12,
         tiles=base_map,
     )
@@ -199,27 +201,60 @@ def main():
     # print(f"Min Opacity: {st.session_state.min_opacity}")
     # print(f"Gradient: {heatmap_defaults['gradient']}")
 
+    
+
+    # if show_red_light_cameras:
+    #     for _, camera in red_light_cameras.iterrows():
+    #         folium.Marker(
+    #             location=[camera.geometry.y, camera.geometry.x],
+    #             icon=folium.Icon(color="red", icon="camera"),
+    #             tooltip="Red Light Camera",
+    #         ).add_to(m)
+
+    # if show_speed_cameras:
+    #     for _, camera in speed_cameras.iterrows():
+    #         folium.Marker(
+    #             location=[camera.geometry.y, camera.geometry.x],
+    #             icon=folium.Icon(color="blue", icon="camera"),
+    #             tooltip="Speed Camera",
+    #         ).add_to(m)
     # Districts layer
-    if show_districts:
-        folium.GeoJson(
+    city_council_districts_folium= folium.GeoJson(
             city_council_districts,
             style_function=lambda x: {
                 "fillColor": "transparent",
                 "color": "black",
                 "weight": 2,
             },
-        ).add_to(m)
+        )
 
     # Neighborhoods layer
-    if show_neighborhoods:
-        folium.GeoJson(
+    neighborhoods_folium = folium.GeoJson(
             neighborhoods,
             style_function=lambda x: {
                 "fillColor": "transparent",
                 "color": "red",
                 "weight": 2,
             },
-        ).add_to(m)
+        )
+    
+    city_council_districts_feature_group = folium.FeatureGroup(name='City Council Districts')
+    city_council_districts_feature_group.add_child(city_council_districts_folium)
+    
+    neighborhoods_feature_group = folium.FeatureGroup(name='Neighborhoods')
+    neighborhoods_feature_group.add_child(neighborhoods_folium)
+    
+    
+    
+    # Now, create a list of the feature groups we want to add to the map from the checkboxes
+    fg_list = []
+    
+    if show_districts:
+        fg_list.append(city_council_districts_feature_group)
+        
+    if show_neighborhoods:
+        fg_list.append(neighborhoods_feature_group)
+    
 
     if show_red_light_cameras:
         for _, camera in red_light_cameras.iterrows():
@@ -238,7 +273,21 @@ def main():
             ).add_to(m)
 
     # Display map
-    st_folium(m, width=900, height=800)
+    st_data = st_folium(
+        m,
+        center=st.session_state["center"],
+        zoom=st.session_state["zoom"],
+        feature_group_to_add=fg_list,
+        width=900,
+        height=800,
+    )
+    # print(st_data['bounds'])
+    # print(st_data["zoom"])
+    # print(st.session_state["zoom"])
+    # print(st_data["center"])
+    # zoom = st_data["zoom"]
+
+    # center = [st_data["center"]['lat'], st_data["center"]['lng']]
 
     readme_raw_url = "https://raw.githubusercontent.com/fedderw/baltimore-city-crash-analysis/74adb465cced95c0708b4ffae74e6d987c482c35/README.md"
     readme_url = "https://github.com/fedderw/baltimore-city-crash-analysis/blob/5111a0363e7d955a4a94a1b58f0703117635d54b/README.md"
