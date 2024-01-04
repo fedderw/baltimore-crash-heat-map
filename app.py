@@ -297,7 +297,14 @@ def main():
 
     st.markdown(f"## About")
     st.write(
-        f"Data for this app was downloaded from the [Maryland State Police Crash Reporting Dashboard]({crash_data_download_tool_url}). Data was downloaded for Baltimore City and filtered to include only crashes involving non-motorists resulting in injury or death. The data was then converted to a GeoJSON file and loaded into a [DuckDB](https://duckdb.org/) database. The app uses [Streamlit](https://streamlit.io/) and [Folium](https://python-visualization.github.io/folium/) to display the data on a map."
+        f"Data for this app was downloaded from the [Maryland State Police Crash Reporting Dashboard]({crash_data_download_tool_url}). Data was downloaded for Baltimore City and filtered to include only crashes involving non-motorists resulting in injury or death. 
+        "
+    )
+    st.write(
+        "The data was then converted to a GeoJSON file and loaded into a [DuckDB](https://duckdb.org/) database. The app uses [Streamlit](https://streamlit.io/) and [Folium](https://python-visualization.github.io/folium/) to display the data on a map."
+    )
+    st.write(
+        "We used the geospatial capabilities of DuckDB to perform a spatial join between the crash data and city boundary to remove crashes with missing or invalid coordinates."
     )
     st.write(
         f"See the app's [GitHub repository]({app_github_url}) for the app's source code."
