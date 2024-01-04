@@ -93,10 +93,10 @@ def load_data():
     neighborhoods = gpd.read_file(neighborhoods_url).clean_names()
     red_light_cameras = gpd.read_file(red_light_cameras_url).clean_names()
     # drop any red light cameras that don't have a valid geometry
-    red_light_cameras = red_light_cameras.dropna(subset=['geometry'])
+    red_light_cameras = red_light_cameras.dropna(subset=["geometry"])
     speed_cameras = gpd.read_file(speed_cameras_url).clean_names()
     # drop any speed cameras that don't have a valid geometry
-    speed_cameras = speed_cameras.dropna(subset=['geometry'])
+    speed_cameras = speed_cameras.dropna(subset=["geometry"])
     return gdf, city_council_districts, neighborhoods, red_light_cameras, speed_cameras
 
 
@@ -158,8 +158,7 @@ def main():
     show_red_light_cameras = st.sidebar.checkbox("Show red light cameras")
     show_speed_cameras = st.sidebar.checkbox("Show speed cameras")
     # drop any speed cameras that don't have a valid geometry
-    speed_cameras = speed_cameras.dropna(subset=['geometry'])
-
+    speed_cameras = speed_cameras.dropna(subset=["geometry"])
 
     base_map = st.sidebar.selectbox(
         "Select Base Map",
@@ -207,8 +206,6 @@ def main():
     # print(f"Min Opacity: {st.session_state.min_opacity}")
     # print(f"Gradient: {heatmap_defaults['gradient']}")
 
-    
-
     # if show_red_light_cameras:
     #     for _, camera in red_light_cameras.iterrows():
     #         folium.Marker(
@@ -225,47 +222,44 @@ def main():
     #             tooltip="Speed Camera",
     #         ).add_to(m)
     # Districts layer
-    city_council_districts_folium= folium.GeoJson(
-            city_council_districts,
-            style_function=lambda x: {
-                "fillColor": "transparent",
-                "color": "black",
-                "weight": 2,
-            },
-        )
+    city_council_districts_folium = folium.GeoJson(
+        city_council_districts,
+        style_function=lambda x: {
+            "fillColor": "transparent",
+            "color": "black",
+            "weight": 2,
+        },
+    )
 
     # Neighborhoods layer
     neighborhoods_folium = folium.GeoJson(
-            neighborhoods,
-            style_function=lambda x: {
-                "fillColor": "transparent",
-                "color": "red",
-                "weight": 2,
-            },
-        )
-    
-    city_council_districts_feature_group = folium.FeatureGroup(name='City Council Districts')
+        neighborhoods,
+        style_function=lambda x: {
+            "fillColor": "transparent",
+            "color": "red",
+            "weight": 2,
+        },
+    )
+
+    city_council_districts_feature_group = folium.FeatureGroup(
+        name="City Council Districts"
+    )
     city_council_districts_feature_group.add_child(city_council_districts_folium)
-    
-    neighborhoods_feature_group = folium.FeatureGroup(name='Neighborhoods')
+
+    neighborhoods_feature_group = folium.FeatureGroup(name="Neighborhoods")
     neighborhoods_feature_group.add_child(neighborhoods_folium)
-    
-    
-    
+
     # Now, create a list of the feature groups we want to add to the map from the checkboxes
     fg_list = []
-    
+
     if show_districts:
         fg_list.append(city_council_districts_feature_group)
-        
+
     if show_neighborhoods:
         fg_list.append(neighborhoods_feature_group)
-    
-    red_light_cameras_feature_group = folium.FeatureGroup(name='Red Light Cameras')
-    speed_cameras_feature_group = folium.FeatureGroup(name='Speed Cameras')
-    
-    
 
+    red_light_cameras_feature_group = folium.FeatureGroup(name="Red Light Cameras")
+    speed_cameras_feature_group = folium.FeatureGroup(name="Speed Cameras")
 
     for _, camera in red_light_cameras.iterrows():
         folium.Marker(
@@ -273,18 +267,17 @@ def main():
             icon=folium.Icon(color="red", icon="camera"),
             tooltip="Red Light Camera",
         ).add_to(red_light_cameras_feature_group)
-    
+
     if show_red_light_cameras:
         fg_list.append(red_light_cameras_feature_group)
 
-    
     for _, camera in speed_cameras.iterrows():
         folium.Marker(
             location=[camera.geometry.y, camera.geometry.x],
             icon=folium.Icon(color="blue", icon="camera"),
             tooltip="Speed Camera",
         ).add_to(speed_cameras_feature_group)
-        
+
     if show_speed_cameras:
         fg_list.append(speed_cameras_feature_group)
 
@@ -309,7 +302,9 @@ def main():
     readme_url = "https://github.com/fedderw/baltimore-city-crash-analysis/blob/5111a0363e7d955a4a94a1b58f0703117635d54b/README.md"
     data_github_url = "https://github.com/fedderw/baltimore-city-crash-analysis"
     app_github_url = "https://github.com/fedderw/baltimore-crash-heat-map"
-    crash_data_download_tool_url = "https://mdsp.maryland.gov/Pages/Dashboards/CrashDataDownload.aspx"
+    crash_data_download_tool_url = (
+        "https://mdsp.maryland.gov/Pages/Dashboards/CrashDataDownload.aspx"
+    )
 
     st.markdown(f"## About")
     st.write(
@@ -322,11 +317,19 @@ def main():
     st.write(
         "We used the geospatial capabilities of DuckDB to perform a spatial join between the crash data and city boundary to remove crashes with missing or invalid coordinates."
     )
-    st.write(f"City council district and neighborhood boundaries were downloaded from [Open Baltimore](https://data.baltimorecity.gov/).")
-    st.write(f"Red light and speed camera locations were downloaded from the following arcgis servers:")
-    st.write(f"Red light cameras: https://services3.arcgis.com/ZTvQ9NuONePFYofE/arcgis/rest/services/Baltimore_ATVES_Red_Light_Camera/FeatureServer/1")
-    st.write(f"Speed cameras: https://services3.arcgis.com/ZTvQ9NuONePFYofE/arcgis/rest/services/Baltimore_ATVES_Speed_Cameras/FeatureServer/0")
-    
+    st.write(
+        f"City council district and neighborhood boundaries were downloaded from [Open Baltimore](https://data.baltimorecity.gov/)."
+    )
+    st.write(
+        f"Red light and speed camera locations were downloaded from the following arcgis servers:"
+    )
+    st.write(
+        f"Red light cameras: https://services3.arcgis.com/ZTvQ9NuONePFYofE/arcgis/rest/services/Baltimore_ATVES_Red_Light_Camera/FeatureServer/1"
+    )
+    st.write(
+        f"Speed cameras: https://services3.arcgis.com/ZTvQ9NuONePFYofE/arcgis/rest/services/Baltimore_ATVES_Speed_Cameras/FeatureServer/0"
+    )
+
     st.write(
         f"See the app's [GitHub repository]({app_github_url}) for the app's source code."
     )
