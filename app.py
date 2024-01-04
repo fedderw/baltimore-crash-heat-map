@@ -293,10 +293,11 @@ def main():
     readme_url = "https://github.com/fedderw/baltimore-city-crash-analysis/blob/5111a0363e7d955a4a94a1b58f0703117635d54b/README.md"
     data_github_url = "https://github.com/fedderw/baltimore-city-crash-analysis"
     app_github_url = "https://github.com/fedderw/baltimore-crash-heat-map"
+    crash_data_download_tool_url = "https://mdsp.maryland.gov/Pages/Dashboards/CrashDataDownload.aspx"
 
     st.markdown(f"## About")
     st.write(
-        f"See the [README]({readme_url}) for more information about the data source and processing."
+        f"Data for this app was downloaded from the [Maryland State Police Crash Reporting Dashboard]({crash_data_download_tool_url}). Data was downloaded for Baltimore City and filtered to include only crashes involving non-motorists resulting in injury or death. The data was then converted to a GeoJSON file and loaded into a [DuckDB](https://duckdb.org/) database. The app uses [Streamlit](https://streamlit.io/) and [Folium](https://python-visualization.github.io/folium/) to display the data on a map."
     )
     st.write(
         f"See the app's [GitHub repository]({app_github_url}) for the app's source code."
