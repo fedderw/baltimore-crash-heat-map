@@ -9,3 +9,7 @@ mapclassify
 streamlit
 streamlit_folium
 black
+isort
+prefect
+duckdb
+ipykernel
