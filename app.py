@@ -5,6 +5,9 @@ from folium.plugins import HeatMap
 from streamlit_folium import st_folium
 from pathlib import Path
 import janitor
+import duckdb
+import pandas as pd
+import datetime
 
 st.set_page_config(layout="wide")
 
@@ -12,13 +15,73 @@ st.set_page_config(layout="wide")
 # Load data
 @st.cache_data
 def load_data():
+    counties_path = "data/external/maryland_county_boundaries.geojson"
+    reports_path = "data/raw/CrashMap_REPORT_data.csv"
+    nonmotorists_path = "data/raw/CrashMap_NONMOTORIST_data.csv"
     clean_data_path = "https://github.com/fedderw/baltimore-city-crash-analysis/blob/74adb465cced95c0708b4ffae74e6d987c482c35/data/clean/crash_data.geojson?raw=true"
     city_council_district_geojson_path = "https://github.com/fedderw/baltimore-city-crash-analysis/blob/74adb465cced95c0708b4ffae74e6d987c482c35/data/clean/city_council_districts.geojson?raw=true"
     neighborhoods_url = "https://services1.arcgis.com/UWYHeuuJISiGmgXx/arcgis/rest/services/Neighborhood/FeatureServer/0/query?outFields=*&where=1%3D1&f=geojson"
     red_light_cameras_url = "https://services3.arcgis.com/ZTvQ9NuONePFYofE/arcgis/rest/services/Baltimore_ATVES_Red_Light_Camera/FeatureServer/1/query?outFields=*&where=1%3D1&f=geojson"
-    speed_cameras_url = "https://services3.arcgis.com/ZTvQ9NuONePFYofE/arcgis/rest/services/Baltimore_ATVES_Speed_Cameras/FeatureServer/3/query?outFields=*&where=1%3D1&f=geojson"
+    speed_cameras_url = "https://services3.arcgis.com/ZTvQ9NuONePFYofE/arcgis/rest/services/Baltimore_ATVES_Speed_Cameras/FeatureServer/0/query?outFields=*&where=1%3D1&f=geojson"
 
-    gdf = gpd.read_file(clean_data_path)
+    # Start duckdb process
+    duckdb.sql("INSTALL spatial")
+    duckdb.sql("LOAD spatial")
+    duckdb.sql(
+        f"""
+        CREATE 
+        OR REPLACE TABLE counties AS 
+        SELECT 
+          county, 
+          geom 
+        FROM 
+          ST_READ('{counties_path}')
+        """
+    )
+    # Write a query to create a table of reports where the Latitute and Longitude are converted to a geometry column
+    duckdb.sql(
+        f"""
+        CREATE 
+        OR REPLACE TABLE reports AS 
+        SELECT 
+        *, 
+        ST_POINT(Longitude, Latitude) AS geom 
+        FROM 
+        '{reports_path}'
+        """
+    )
+    # Create a table of nonmotorists
+    duckdb.sql(
+        f"""
+        CREATE 
+        OR REPLACE TABLE nonmotorists AS 
+        SELECT 
+        * 
+        FROM 
+        '{nonmotorists_path}'
+    """
+    )
+    nonmotorist_crashes = duckdb.sql(
+        """
+        SELECT 
+            reports.ReportNumber, 
+            reports.geom AS geometry, 
+            ST_AsWKB(reports.geom) AS wkb,
+            counties.county,
+            ST_X(reports.geom) AS longitude,
+            ST_Y(reports.geom) AS latitude,
+            reports.Crashdate AS crash_date,
+        FROM reports
+        JOIN counties
+        ON ST_WITHIN(reports.geom, counties.geom)
+        WHERE counties.county = 'Baltimore City'
+        AND reports.ReportNumber IN (
+            SELECT ReportNumber
+            FROM nonmotorists
+            )
+        """
+    ).df()
+    gdf = gpd.GeoDataFrame(nonmotorist_crashes, geometry=gpd.points_from_xy(nonmotorist_crashes.longitude, nonmotorist_crashes.latitude))
     city_council_districts = gpd.read_file(
         city_council_district_geojson_path
     ).clean_names()
@@ -46,7 +109,15 @@ def reset_defaults():
 
 def main():
     st.title("Crashes involving non-motorists resulting in injury or death")
-    st.write("Data from 1/1/2018 to 12/11/2023")
+    
+    # Load data
+    (
+        gdf,
+        city_council_districts,
+        neighborhoods,
+        red_light_cameras,
+        speed_cameras,
+    ) = load_data()
 
     # Initialize session state variables
     if "radius" not in st.session_state:
@@ -69,10 +140,27 @@ def main():
     show_neighborhoods = st.sidebar.checkbox("Show neighborhood boundaries")
     show_red_light_cameras = st.sidebar.checkbox("Show red light cameras")
     show_speed_cameras = st.sidebar.checkbox("Show speed cameras")
-    non_motorist_filter = st.sidebar.checkbox(
-        "Show only crashes involving non-motorists", value=True
+    
+  
+    
+    start_date_input = st.sidebar.date_input(
+        "Start Date", gdf["crash_date"].min()
     )
-
+    # print(start_date_input)
+    end_date_input = st.sidebar.date_input(
+        "End Date", gdf["crash_date"].max()
+    )
+    if start_date_input > end_date_input:
+        st.sidebar.error("End date must fall after start date.")
+    else:
+        gdf = gdf[
+            gdf["crash_date"].between(
+                datetime.datetime.combine(start_date_input, datetime.time.min),
+                datetime.datetime.combine(end_date_input, datetime.time.max),
+            )
+        ]
+        
+    
     # Create a slider for the radius of the heatmap
     st.sidebar.markdown("## Heatmap Options")
     st.session_state.radius = st.sidebar.slider(
@@ -88,19 +176,6 @@ def main():
     # Option to reset to default values
     if st.sidebar.button("Reset to Default Values"):
         reset_defaults()
-
-    # Load data
-    (
-        gdf,
-        city_council_districts,
-        neighborhoods,
-        red_light_cameras,
-        speed_cameras,
-    ) = load_data()
-
-    # Apply non-motorist filter
-    if non_motorist_filter:
-        gdf = gdf[gdf["non_motorist_involved"] == True]
 
     # Create map
     m = folium.Map(
@@ -119,10 +194,10 @@ def main():
         gradient=heatmap_defaults["gradient"],
     ).add_to(m)
 
-    print(f"Radius: {st.session_state.radius}")
-    print(f"Blur: {st.session_state.blur}")
-    print(f"Min Opacity: {st.session_state.min_opacity}")
-    print(f"Gradient: {heatmap_defaults['gradient']}")
+    # print(f"Radius: {st.session_state.radius}")
+    # print(f"Blur: {st.session_state.blur}")
+    # print(f"Min Opacity: {st.session_state.min_opacity}")
+    # print(f"Gradient: {heatmap_defaults['gradient']}")
 
     # Districts layer
     if show_districts:
