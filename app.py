@@ -18,8 +18,7 @@ def load_data():
     counties_path = "data/external/maryland_county_boundaries.geojson"
     reports_path = "data/raw/CrashMap_REPORT_data.csv"
     nonmotorists_path = "data/raw/CrashMap_NONMOTORIST_data.csv"
-    clean_data_path = "https://github.com/fedderw/baltimore-city-crash-analysis/blob/74adb465cced95c0708b4ffae74e6d987c482c35/data/clean/crash_data.geojson?raw=true"
-    city_council_district_geojson_path = "https://github.com/fedderw/baltimore-city-crash-analysis/blob/74adb465cced95c0708b4ffae74e6d987c482c35/data/clean/city_council_districts.geojson?raw=true"
+    city_council_district_geojson_path = "data/external/city_council_districts.geojson"
     neighborhoods_url = "https://services1.arcgis.com/UWYHeuuJISiGmgXx/arcgis/rest/services/Neighborhood/FeatureServer/0/query?outFields=*&where=1%3D1&f=geojson"
     red_light_cameras_url = "https://services3.arcgis.com/ZTvQ9NuONePFYofE/arcgis/rest/services/Baltimore_ATVES_Red_Light_Camera/FeatureServer/1/query?outFields=*&where=1%3D1&f=geojson"
     speed_cameras_url = "https://services3.arcgis.com/ZTvQ9NuONePFYofE/arcgis/rest/services/Baltimore_ATVES_Speed_Cameras/FeatureServer/0/query?outFields=*&where=1%3D1&f=geojson"
@@ -65,8 +64,6 @@ def load_data():
         """
         SELECT 
             reports.ReportNumber, 
-            reports.geom AS geometry, 
-            ST_AsWKB(reports.geom) AS wkb,
             counties.county,
             ST_X(reports.geom) AS longitude,
             ST_Y(reports.geom) AS latitude,
@@ -201,26 +198,6 @@ def main():
         gradient=heatmap_defaults["gradient"],
     ).add_to(m)
 
-    # print(f"Radius: {st.session_state.radius}")
-    # print(f"Blur: {st.session_state.blur}")
-    # print(f"Min Opacity: {st.session_state.min_opacity}")
-    # print(f"Gradient: {heatmap_defaults['gradient']}")
-
-    # if show_red_light_cameras:
-    #     for _, camera in red_light_cameras.iterrows():
-    #         folium.Marker(
-    #             location=[camera.geometry.y, camera.geometry.x],
-    #             icon=folium.Icon(color="red", icon="camera"),
-    #             tooltip="Red Light Camera",
-    #         ).add_to(m)
-
-    # if show_speed_cameras:
-    #     for _, camera in speed_cameras.iterrows():
-    #         folium.Marker(
-    #             location=[camera.geometry.y, camera.geometry.x],
-    #             icon=folium.Icon(color="blue", icon="camera"),
-    #             tooltip="Speed Camera",
-    #         ).add_to(m)
     # Districts layer
     city_council_districts_folium = folium.GeoJson(
         city_council_districts,
