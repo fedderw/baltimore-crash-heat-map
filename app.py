@@ -92,8 +92,11 @@ def load_data():
     ).clean_names()
     neighborhoods = gpd.read_file(neighborhoods_url).clean_names()
     red_light_cameras = gpd.read_file(red_light_cameras_url).clean_names()
+    # drop any red light cameras that don't have a valid geometry
+    red_light_cameras = red_light_cameras.dropna(subset=['geometry'])
     speed_cameras = gpd.read_file(speed_cameras_url).clean_names()
-
+    # drop any speed cameras that don't have a valid geometry
+    speed_cameras = speed_cameras.dropna(subset=['geometry'])
     return gdf, city_council_districts, neighborhoods, red_light_cameras, speed_cameras
 
 
@@ -154,6 +157,8 @@ def main():
     show_neighborhoods = st.sidebar.checkbox("Show neighborhood boundaries")
     show_red_light_cameras = st.sidebar.checkbox("Show red light cameras")
     show_speed_cameras = st.sidebar.checkbox("Show speed cameras")
+    # drop any speed cameras that don't have a valid geometry
+    speed_cameras = speed_cameras.dropna(subset=['geometry'])
 
 
     base_map = st.sidebar.selectbox(
@@ -256,22 +261,32 @@ def main():
     if show_neighborhoods:
         fg_list.append(neighborhoods_feature_group)
     
+    red_light_cameras_feature_group = folium.FeatureGroup(name='Red Light Cameras')
+    speed_cameras_feature_group = folium.FeatureGroup(name='Speed Cameras')
+    
+    
 
+
+    for _, camera in red_light_cameras.iterrows():
+        folium.Marker(
+            location=[camera.geometry.y, camera.geometry.x],
+            icon=folium.Icon(color="red", icon="camera"),
+            tooltip="Red Light Camera",
+        ).add_to(red_light_cameras_feature_group)
+    
     if show_red_light_cameras:
-        for _, camera in red_light_cameras.iterrows():
-            folium.Marker(
-                location=[camera.geometry.y, camera.geometry.x],
-                icon=folium.Icon(color="red", icon="camera"),
-                tooltip="Red Light Camera",
-            ).add_to(m)
+        fg_list.append(red_light_cameras_feature_group)
 
+    
+    for _, camera in speed_cameras.iterrows():
+        folium.Marker(
+            location=[camera.geometry.y, camera.geometry.x],
+            icon=folium.Icon(color="blue", icon="camera"),
+            tooltip="Speed Camera",
+        ).add_to(speed_cameras_feature_group)
+        
     if show_speed_cameras:
-        for _, camera in speed_cameras.iterrows():
-            folium.Marker(
-                location=[camera.geometry.y, camera.geometry.x],
-                icon=folium.Icon(color="blue", icon="camera"),
-                tooltip="Speed Camera",
-            ).add_to(m)
+        fg_list.append(speed_cameras_feature_group)
 
     # Display map
     st_data = st_folium(
