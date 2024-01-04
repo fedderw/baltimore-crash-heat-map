@@ -137,19 +137,6 @@ def main():
         st.session_state.center = [gdf.geometry.y.mean(), gdf.geometry.x.mean()]
 
     # Sidebar options
-    base_map = st.sidebar.selectbox(
-        "Select Base Map",
-        [
-            "CartoDB positron",
-            "CartoDB dark_matter",
-            "OpenStreetMap",
-        ],
-    )
-    show_districts = st.sidebar.checkbox("Show city council district boundaries")
-    show_neighborhoods = st.sidebar.checkbox("Show neighborhood boundaries")
-    show_red_light_cameras = st.sidebar.checkbox("Show red light cameras")
-    show_speed_cameras = st.sidebar.checkbox("Show speed cameras")
-
     start_date_input = st.sidebar.date_input("Start Date", gdf["crash_date"].min())
     # print(start_date_input)
     end_date_input = st.sidebar.date_input("End Date", gdf["crash_date"].max())
@@ -163,6 +150,20 @@ def main():
             )
         ]
 
+    show_districts = st.sidebar.checkbox("Show city council district boundaries")
+    show_neighborhoods = st.sidebar.checkbox("Show neighborhood boundaries")
+    show_red_light_cameras = st.sidebar.checkbox("Show red light cameras")
+    show_speed_cameras = st.sidebar.checkbox("Show speed cameras")
+
+
+    base_map = st.sidebar.selectbox(
+        "Select Base Map",
+        [
+            "CartoDB positron",
+            "CartoDB dark_matter",
+            "OpenStreetMap",
+        ],
+    )
     # Create a slider for the radius of the heatmap
     st.sidebar.markdown("## Heatmap Options")
     st.session_state.radius = st.sidebar.slider(
@@ -306,8 +307,11 @@ def main():
     st.write(
         "We used the geospatial capabilities of DuckDB to perform a spatial join between the crash data and city boundary to remove crashes with missing or invalid coordinates."
     )
-    st.write("City council district and neighborhood boundaries were downloaded from [Open Baltimore](https://data.baltimorecity.gov/).")
-    st.write("Red light and speed camera locations were downloaded from [Open Baltimore](https://data.baltimorecity.gov/).")
+    st.write(f"City council district and neighborhood boundaries were downloaded from [Open Baltimore](https://data.baltimorecity.gov/).")
+    st.write(f"Red light and speed camera locations were downloaded from the following arcgis servers:")
+    st.write(f"Red light cameras: https://services3.arcgis.com/ZTvQ9NuONePFYofE/arcgis/rest/services/Baltimore_ATVES_Red_Light_Camera/FeatureServer/1")
+    st.write(f"Speed cameras: https://services3.arcgis.com/ZTvQ9NuONePFYofE/arcgis/rest/services/Baltimore_ATVES_Speed_Cameras/FeatureServer/0")
+    
     st.write(
         f"See the app's [GitHub repository]({app_github_url}) for the app's source code."
     )
