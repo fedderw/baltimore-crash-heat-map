@@ -306,6 +306,8 @@ def main():
     st.write(
         "We used the geospatial capabilities of DuckDB to perform a spatial join between the crash data and city boundary to remove crashes with missing or invalid coordinates."
     )
+    st.write("City council district and neighborhood boundaries were downloaded from [Open Baltimore](https://data.baltimorecity.gov/).")
+    st.write("Red light and speed camera locations were downloaded from [Open Baltimore](https://data.baltimorecity.gov/).")
     st.write(
         f"See the app's [GitHub repository]({app_github_url}) for the app's source code."
     )
