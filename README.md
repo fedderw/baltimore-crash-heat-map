@@ -36,6 +36,8 @@ streamlit run your_script_name.py
 - City council district and neighborhood boundaries from Open Baltimore.
 - Red light and speed camera locations from ArcGIS servers.
 
+For the crash data, download each table from the Tableau dashboard. Make sure you select all fields. Many are not shown by default
+
 ## Application Structure
 1. **Data Loading**: Load geospatial data using GeoPandas and process it using DuckDB for spatial queries.
 2. **Streamlit Interface**: Utilize Streamlit to create an interactive web application.
