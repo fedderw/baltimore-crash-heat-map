@@ -1,13 +1,14 @@
-import streamlit as st
-import geopandas as gpd
+import datetime
+from pathlib import Path
+
+import duckdb
 import folium
+import geopandas as gpd
+import janitor
+import pandas as pd
+import streamlit as st
 from folium.plugins import HeatMap
 from streamlit_folium import st_folium
-from pathlib import Path
-import janitor
-import duckdb
-import pandas as pd
-import datetime
 
 st.set_page_config(layout="wide")
 
@@ -18,7 +19,9 @@ def load_data():
     counties_path = "data/external/maryland_county_boundaries.geojson"
     reports_path = "data/raw/CrashMap_REPORT_data.csv"
     nonmotorists_path = "data/raw/CrashMap_NONMOTORIST_data.csv"
-    city_council_district_geojson_path = "data/external/city_council_districts.geojson"
+    city_council_district_geojson_path = (
+        "data/external/city_council_districts.geojson"
+    )
     neighborhoods_url = "https://services1.arcgis.com/UWYHeuuJISiGmgXx/arcgis/rest/services/Neighborhood/FeatureServer/0/query?outFields=*&where=1%3D1&f=geojson"
     red_light_cameras_url = "https://services3.arcgis.com/ZTvQ9NuONePFYofE/arcgis/rest/services/Baltimore_ATVES_Red_Light_Camera/FeatureServer/1/query?outFields=*&where=1%3D1&f=geojson"
     speed_cameras_url = "https://services3.arcgis.com/ZTvQ9NuONePFYofE/arcgis/rest/services/Baltimore_ATVES_Speed_Cameras/FeatureServer/0/query?outFields=*&where=1%3D1&f=geojson"
@@ -94,7 +97,13 @@ def load_data():
     speed_cameras = gpd.read_file(speed_cameras_url).clean_names()
     # drop any speed cameras that don't have a valid geometry
     speed_cameras = speed_cameras.dropna(subset=["geometry"])
-    return gdf, city_council_districts, neighborhoods, red_light_cameras, speed_cameras
+    return (
+        gdf,
+        city_council_districts,
+        neighborhoods,
+        red_light_cameras,
+        speed_cameras,
+    )
 
 
 heatmap_defaults = {
@@ -134,10 +143,15 @@ def main():
     if "zoom" not in st.session_state:
         st.session_state.zoom = 12
     if "center" not in st.session_state:
-        st.session_state.center = [gdf.geometry.y.mean(), gdf.geometry.x.mean()]
+        st.session_state.center = [
+            gdf.geometry.y.mean(),
+            gdf.geometry.x.mean(),
+        ]
 
     # Sidebar options
-    start_date_input = st.sidebar.date_input("Start Date", gdf["crash_date"].min())
+    start_date_input = st.sidebar.date_input(
+        "Start Date", gdf["crash_date"].min()
+    )
     # print(start_date_input)
     end_date_input = st.sidebar.date_input("End Date", gdf["crash_date"].max())
     if start_date_input > end_date_input:
@@ -150,7 +164,9 @@ def main():
             )
         ]
 
-    show_districts = st.sidebar.checkbox("Show city council district boundaries")
+    show_districts = st.sidebar.checkbox(
+        "Show city council district boundaries"
+    )
     show_neighborhoods = st.sidebar.checkbox("Show neighborhood boundaries")
     show_red_light_cameras = st.sidebar.checkbox("Show red light cameras")
     show_speed_cameras = st.sidebar.checkbox("Show speed cameras")
@@ -168,13 +184,22 @@ def main():
     # Create a slider for the radius of the heatmap
     st.sidebar.markdown("## Heatmap Options")
     st.session_state.radius = st.sidebar.slider(
-        "Radius (in pixels)", min_value=1, max_value=100, value=st.session_state.radius
+        "Radius (in pixels)",
+        min_value=1,
+        max_value=100,
+        value=st.session_state.radius,
     )
     st.session_state.blur = st.sidebar.slider(
-        "Blur (in pixels)", min_value=1, max_value=100, value=st.session_state.blur
+        "Blur (in pixels)",
+        min_value=1,
+        max_value=100,
+        value=st.session_state.blur,
     )
     st.session_state.min_opacity = st.sidebar.slider(
-        "Min Opacity", min_value=0.0, max_value=1.0, value=st.session_state.min_opacity
+        "Min Opacity",
+        min_value=0.0,
+        max_value=1.0,
+        value=st.session_state.min_opacity,
     )
 
     # Option to reset to default values
@@ -221,7 +246,9 @@ def main():
     city_council_districts_feature_group = folium.FeatureGroup(
         name="City Council Districts"
     )
-    city_council_districts_feature_group.add_child(city_council_districts_folium)
+    city_council_districts_feature_group.add_child(
+        city_council_districts_folium
+    )
 
     neighborhoods_feature_group = folium.FeatureGroup(name="Neighborhoods")
     neighborhoods_feature_group.add_child(neighborhoods_folium)
@@ -235,7 +262,9 @@ def main():
     if show_neighborhoods:
         fg_list.append(neighborhoods_feature_group)
 
-    red_light_cameras_feature_group = folium.FeatureGroup(name="Red Light Cameras")
+    red_light_cameras_feature_group = folium.FeatureGroup(
+        name="Red Light Cameras"
+    )
     speed_cameras_feature_group = folium.FeatureGroup(name="Speed Cameras")
 
     for _, camera in red_light_cameras.iterrows():
@@ -277,7 +306,9 @@ def main():
 
     readme_raw_url = "https://raw.githubusercontent.com/fedderw/baltimore-city-crash-analysis/74adb465cced95c0708b4ffae74e6d987c482c35/README.md"
     readme_url = "https://github.com/fedderw/baltimore-city-crash-analysis/blob/5111a0363e7d955a4a94a1b58f0703117635d54b/README.md"
-    data_github_url = "https://github.com/fedderw/baltimore-city-crash-analysis"
+    data_github_url = (
+        "https://github.com/fedderw/baltimore-city-crash-analysis"
+    )
     app_github_url = "https://github.com/fedderw/baltimore-crash-heat-map"
     crash_data_download_tool_url = (
         "https://mdsp.maryland.gov/Pages/Dashboards/CrashDataDownload.aspx"
